@@ -14,12 +14,13 @@ namespace PlayerSystem.Controller
         public static PlayerController Instance { get; private set; }
 
         [Header("References")]
+        public Transform spawn;
         private Rigidbody body;
-        [SerializeField] private Transform spawn;
         [SerializeField] private Transform cameraPosition;
         [SerializeField] private Transform barrel;
         [SerializeField] private GameObject bullet;
         [SerializeField] private LayerMask groundLayer;
+        [SerializeField] private GameObject[] Platforms;
 
         [Header("Inputs")]
         [SerializeField] private InputAction look;
@@ -27,6 +28,7 @@ namespace PlayerSystem.Controller
         [SerializeField] private InputAction jump;
         [SerializeField] private InputAction pressClick;
         [SerializeField] private InputAction releaseClick;
+        [SerializeField] private InputAction reset;
 
         [Header("Stats")]
         [SerializeField] private float sensitivity = 1;
@@ -41,6 +43,8 @@ namespace PlayerSystem.Controller
         private Vector2 moveDirection;
         private Vector3 barrelPos, movement;
         private Quaternion barrelRot;
+
+        public int platformCount;
 
         [HideInInspector] public bool activate = false;
 
@@ -65,20 +69,27 @@ namespace PlayerSystem.Controller
             jump.Enable();
             pressClick.Enable();
             releaseClick.Enable();
+            reset.Enable();
 
             LockCursor();
         }
 
         private void Update()
         {
+            Values();
             Movement();
             Shooting();
-            FallRestart();
+            Restart();
         }
         private void FixedUpdate()
         {
             // Physics Movement
             body.AddForce(movement * Time.deltaTime, ForceMode.VelocityChange);
+        }
+
+        private void Values()
+        {
+            Platforms = GameObject.FindGameObjectsWithTag("Platform");
         }
 
         private void LockCursor()
@@ -158,7 +169,7 @@ namespace PlayerSystem.Controller
             barrelRot = barrel.rotation;
 
             // On mouse click instantiate bullet prefab
-            if (pressClick.triggered)
+            if (pressClick.triggered && Platforms.Length < 3)
             {
                 activate = false;
                 Instantiate(bullet, barrelPos, barrelRot);
@@ -170,27 +181,41 @@ namespace PlayerSystem.Controller
             }
         }
 
+        private void Restart()
+        {
+            if (transform.position.y < -9.5)
+            {
+                transform.position = spawn.position;
+
+                ResetPlatforms();
+            }
+
+            if (reset.triggered)
+            {
+                transform.position = spawn.position;
+
+                ResetPlatforms();
+            }
+        }
+
+        public void ResetPlatforms()
+        {
+            foreach (var i in Platforms) { Destroy(i); }
+        }
+
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(new Vector3(
-                transform.position.x, 
-                transform.position.y - 1, 
+                transform.position.x,
+                transform.position.y - 1,
                 transform.position.z),
                 colliderRadius);
         }
 
         private void DebugLines()
         {
-            Debug.Log(moveDirection.x + " " + moveDirection.y);
-        }
-
-        private void FallRestart()
-        {
-            if (transform.position.y < -9.5)
-            {
-                transform.position = spawn.position;
-            }
+            Debug.Log(Platforms.Length);
         }
     }
 }

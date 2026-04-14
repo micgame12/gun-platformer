@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using PlayerSystem.Controller;
+using Unity.VisualScripting;
 
 public class Bullet : MonoBehaviour
 {
@@ -25,9 +26,12 @@ public class Bullet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        DestroyCases();
+
         if (controller.activate)
         {
             Instantiate(platform, transform.position, rotate);
+            controller.platformCount += 1;
             Destroy(this.gameObject);
         }
     }
@@ -44,5 +48,11 @@ public class Bullet : MonoBehaviour
         {
             Destroy(this.gameObject);
         }
+        else { Destroy(this.gameObject); }
+    }
+
+    private void DestroyCases()
+    {
+        if (transform.position.y < -9.5) { Destroy(this.gameObject); }
     }
 }
